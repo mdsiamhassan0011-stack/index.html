@@ -57,7 +57,7 @@ nav button.on{color:var(--ac)}
 <nav><div id="nav"></div></nav></div>
 <script>
 /* ===== কনফিগ: নিজের ব্যাকএন্ড URL দিন। খালি থাকলে ডেমো মোড চলবে (কোনো আসল ব্যালেন্স নেই) ===== */
-const API_BASE = "";   // উদাহরণ: "https://api.yourdomain.com"
+const API_BASE = "https://task-bot-backend.onrender.com";
 const BOT_USERNAME = "task_toearnbot";
 
 const tg = window.Telegram && Telegram.WebApp;
@@ -146,7 +146,7 @@ async function render(){const m=$("#v");try{m.innerHTML=await V[sub||tab]();m.sc
 /* ---------- events (delegation) ---------- */
 $("#v").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
  if(t.id==="claim")act(async()=>{t.disabled=true;await api("/api/daily-reward/claim","POST");toast("রিওয়ার্ড যোগ হয়েছে ✅");render()});
- if(t.dataset.go){const k=cache.tasks.find(x=>x.id==t.dataset.go);if(k.url)(tg?tg.openLink(k.url):window.open(k.url));k.status="opened"}
+ if(t.dataset.go){const k=cache.tasks.find(x=>x.id==t.dataset.go);if(k.url)(tg?tg.openLink(k.url):window.open(k.url));k.status="opened";api("/api/tasks/open","POST",{id:k.id}).catch(()=>{})}
  if(t.dataset.vf)act(async()=>{t.disabled=true;await api("/api/tasks/verify","POST",{id:+t.dataset.vf});toast("যাচাই সফল ✅");render()});
  if(t.id==="copy")navigator.clipboard.writeText(link()).then(()=>toast("লিংক কপি হয়েছে"));
  if(t.id==="share"){const u="https://t.me/share/url?url="+encodeURIComponent(link())+"&text="+encodeURIComponent("TASK BOT-এ কাজ করে BDT আয় করুন!");tg?tg.openTelegramLink(u):window.open(u)}
