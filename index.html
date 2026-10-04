@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>TASK BOT</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#070b14;--card:rgba(255,255,255,.06);--line:rgba(255,255,255,.1);--tx:#eef2ff;--mu:#8b95b0;--ac:#38e8c6;--ac2:#6a7bff;--bad:#ff6b81;--ok:#4ade80}
+:root[data-theme=light]{--bg:#eef1f8;--card:rgba(255,255,255,.8);--line:rgba(0,0,0,.08);--tx:#111827;--mu:#5b6478}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(120% 60% at 50% -10%,rgba(106,123,255,.25),transparent 60%),var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Noto Sans Bengali","Segoe UI",sans-serif;padding-top:env(safe-area-inset-top)}
+#app{max-width:480px;margin:0 auto;height:100%;display:flex;flex-direction:column}
+main{flex:1;overflow-y:auto;padding:14px 14px 90px;-webkit-overflow-scrolling:touch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+h2{font-size:18px;margin:4px 2px 12px}
+h3{font-size:15px}
+.mu{color:var(--mu);font-size:13px}
+.row{display:flex;align-items:center;gap:10px}
+.sp{justify-content:space-between}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}
+.stat b{display:block;font-size:19px}
+.btn{border:0;border-radius:14px;padding:12px 16px;min-height:44px;font:inherit;font-weight:700;color:#04121a;background:linear-gradient(135deg,var(--ac),#7df3dc);cursor:pointer;width:100%}
+.btn.sm{width:auto;min-height:38px;padding:8px 14px;font-size:13px}
+.btn.alt{background:var(--card);color:var(--tx);border:1px solid var(--line)}
+.btn[disabled]{opacity:.45}
+input,select{width:100%;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx);padding:10px 12px;font:inherit;margin-bottom:10px}
+.hero{text-align:center;padding:22px 14px}
+.bal{font-size:34px;font-weight:800;letter-spacing:-.5px}
+.orb{width:176px;height:176px;margin:16px auto 6px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--ac) calc(var(--p)*1%),rgba(255,255,255,.08) 0);position:relative;box-shadow:0 0 40px rgba(56,232,198,.25)}
+.orb:before{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.orb span{position:relative;font-size:38px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0}
+.day{border:1px solid var(--line);border-radius:12px;padding:8px 0;text-align:center;font-size:12px}
+.day b{display:block;font-size:14px}
+.day.done{background:rgba(74,222,128,.15);border-color:var(--ok)}
+.day.now{border-color:var(--ac);box-shadow:0 0 12px rgba(56,232,198,.3)}
+.tag{font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mu)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.bad{color:var(--bad);border-color:var(--bad)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+nav div{display:flex;width:100%;max-width:480px}
+nav button{flex:1;background:none;border:0;color:var(--mu);font:inherit;font-size:11px;min-height:48px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button i{font-style:normal;font-size:20px}
+nav button.on{color:var(--ac)}
+.av{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--ac2),var(--ac));display:grid;place-items:center;font-size:26px;font-weight:800;color:#04121a;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13px;z-index:9;max-width:90%}
+.demo{background:rgba(255,200,0,.15);border:1px solid rgba(255,200,0,.5);padding:8px 12px;border-radius:12px;font-size:12px;margin-bottom:12px}
+.link{word-break:break-all;font-size:12px;color:var(--ac)}
+@media(prefers-reduced-motion:no-preference){.orb{transition:background .6s}}
+</style>
+</head>
+<body>
+<div id="app"><main id="v"></main>
+<nav><div id="nav"></div></nav></div>
+<script>
+/* ===== কনফিগ: নিজের ব্যাকএন্ড URL দিন। খালি থাকলে ডেমো মোড চলবে (কোনো আসল ব্যালেন্স নেই) ===== */
+const API_BASE = "";   // উদাহরণ: "https://api.yourdomain.com"
+const BOT_USERNAME = "task_toearnbot";
+
+const tg = window.Telegram && Telegram.WebApp;
+const inTG = !!(tg && tg.initData);
+if (tg) { tg.ready(); tg.expand(); document.documentElement.dataset.theme = tg.colorScheme; tg.onEvent("themeChanged", () => document.documentElement.dataset.theme = tg.colorScheme); }
+const tu = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || { id: 0, first_name: "Guest", username: "guest" };
+
+/* ---------- API ---------- */
+const demo = !API_BASE;
+const D = { user:{balance:12450,refBalance:10,taskBalance:0,streak:2,rank:"Rookie",level:"Expert",totalEarned:12450,referrals:0,tasksDone:0,claimedToday:false},
+  tasks:[{id:1,title:"Join official channel",desc:"Telegram চ্যানেলে যুক্ত হোন",reward:5,type:"channel",url:"https://t.me/telegram",status:"idle"},
+         {id:2,title:"Visit website",desc:"ওয়েবসাইট ভিজিট করুন",reward:3,type:"website",url:"https://telegram.org",status:"idle"},
+         {id:3,title:"Watch video",desc:"ভিডিও দেখুন",reward:4,type:"youtube",url:"https://youtube.com",status:"idle"}],
+  ref:{invited:0,active:0,earned:0}, ads:{left:10,reward:5}, tx:[], wd:{min:300,methods:["বিকাশ","নগদ","Binance (USDT BSC)"]} };
+async function api(path, method="GET", body){
+  if (demo) return mock(path, body);
+  const r = await fetch(API_BASE+path,{method,headers:{"Content-Type":"application/json","Authorization":"tma "+tg.initData,"X-Idempotency-Key":crypto.randomUUID()},body:body?JSON.stringify(body):undefined});
+  const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||"Error"); return j;
+}
+function mock(p,b){ // শুধু UI দেখার জন্য; আসল সিস্টেমে সার্ভার সিদ্ধান্ত নেয়
+  const u=D.user, add=(a,t)=>{u.balance+=a;u.totalEarned+=a;D.tx.unshift({t:new Date().toISOString(),type:t,amount:a,status:"Completed"})};
+  if(p==="/api/user")return u; if(p==="/api/tasks")return D.tasks; if(p==="/api/referrals")return D.ref;
+  if(p==="/api/ads")return D.ads; if(p==="/api/wallet")return D.wd; if(p==="/api/transactions")return D.tx;
+  if(p==="/api/daily-reward/claim"){if(u.claimedToday)throw Error("আজকের রিওয়ার্ড নেওয়া হয়েছে");add([1,2,3,4,5,6,8][u.streak%7],"Daily Reward");u.streak++;u.claimedToday=true;return u}
+  if(p==="/api/tasks/verify"){const t=D.tasks.find(x=>x.id===b.id);t.status="done";add(t.reward,"Task Reward");u.tasksDone++;return t}
+  if(p==="/api/ads/claim"){if(!D.ads.left)throw Error("আজকের লিমিট শেষ");D.ads.left--;add(D.ads.reward,"Ad Reward");return D.ads}
+  if(p==="/api/withdraw"){if(b.amount<D.wd.min)throw Error("সর্বনিম্ন "+D.wd.min+" BDT");if(b.amount>u.balance)throw Error("ব্যালেন্স যথেষ্ট নয়");u.balance-=b.amount;D.tx.unshift({t:new Date().toISOString(),type:"Withdrawal",amount:-b.amount,status:"Pending"});return {ok:1}}
+}
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s), esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>Number(n).toLocaleString("en-US");
+let tab="home", sub=null, cache={};
+function toast(m){const e=document.createElement("div");e.className="toast";e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),2200)}
+async function act(fn){try{await fn()}catch(e){toast(e.message)}}
+const link=()=>`https://t.me/${BOT_USERNAME}?start=${tu.id}`;
+const demoBar=()=>demo?'<div class="demo">⚠️ ডেমো মোড — API_BASE সেট না থাকায় ডাটা সার্ভারে সেভ হচ্ছে না।</div>':"";
+
+/* ---------- nav / back button ---------- */
+const TABS=[["home","🏠","Home"],["earn","💰","Earn"],["friends","👥","Friends"],["ads","📺","Ads"],["profile","👤","Profile"]];
+$("#nav").innerHTML=TABS.map(t=>`<button data-t="${t[0]}"><i>${t[1]}</i>${t[2]}</button>`).join("");
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(b){go(b.dataset.t)}};
+function go(t,s=null){tab=t;sub=s;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  if(tg){if(sub){tg.BackButton.show()}else{tg.BackButton.hide()}} render()}
+if(tg)tg.BackButton.onClick(()=>go("profile"));
+
+/* ---------- views ---------- */
+const V={
+async home(){const u=cache.user=await api("/api/user");const d=u.streak%7;
+ const days=[1,2,3,4,5,6,8].map((r,i)=>`<div class="day ${i<d?"done":""} ${i===d&&!u.claimedToday?"now":""}">D${i+1}<b>${r}</b></div>`).join("");
+ return `${demoBar()}<div class="card hero"><div class="mu">BD Balance</div><div class="bal">${fmt(u.balance)} BDT</div>
+ <div class="orb" style="--p:${Math.min(100,u.tasksDone*10)}"><span>TASK</span></div><div class="mu">Tap • Complete • Earn</div></div>
+ <div class="grid g2"><div class="card stat"><span class="mu">Refer Balance</span><b>${fmt(u.refBalance)} BDT</b></div><div class="card stat"><span class="mu">Task Balance</span><b>${fmt(u.taskBalance)} BDT</b></div>
+ <div class="card stat"><span class="mu">মোট অর্জিত</span><b>${fmt(u.totalEarned)} BDT</b></div><div class="card stat"><span class="mu">Rank</span><b>${esc(u.rank)}</b></div></div>
+ <div class="card"><div class="row sp"><h3>🔥 Daily Streak: ${u.streak}</h3><span class="tag">১ দিন মিস = রিসেট</span></div><div class="days">${days}</div>
+ <button class="btn" id="claim" ${u.claimedToday?"disabled":""}>${u.claimedToday?"আজ ক্লেইম করা হয়েছে":"Claim Daily Reward"}</button></div>`},
+async earn(){const t=cache.tasks=await api("/api/tasks");
+ return `${demoBar()}<h2>Earn</h2>`+t.map(k=>`<div class="card"><div class="row sp"><h3>${esc(k.title)}</h3><b style="color:var(--ac)">+${k.reward} BDT</b></div>
+ <p class="mu" style="margin:4px 0 10px">${esc(k.desc)}</p>
+ ${k.status==="done"?'<span class="tag ok">✔ Completed</span>':`<div class="row"><button class="btn sm" data-go="${k.id}">${k.type==="channel"||k.type==="group"?"JOIN":"OPEN"}</button><button class="btn sm alt" data-vf="${k.id}">VERIFY</button><span class="tag">${k.status==="opened"?"Pending verify":"Not verified"}</span></div>`}</div>`).join("")},
+async friends(){const r=await api("/api/referrals"),l=link();
+ return `${demoBar()}<h2>👥 Invite Friends</h2><p class="mu" style="margin:-6px 2px 12px">বন্ধুদের আমন্ত্রণ জানান এবং BDT আয় করুন।</p>
+ <div class="grid g2"><div class="card stat"><span class="mu">মোট বন্ধু</span><b>${r.invited}</b></div><div class="card stat"><span class="mu">সক্রিয় বন্ধু</span><b>${r.active}</b></div></div>
+ <div class="card stat"><span class="mu">রেফারেল আয়</span><b>${fmt(r.earned)} BDT</b></div>
+ <div class="card"><div class="mu">Your referral link</div><div class="link" style="margin:6px 0 12px">${esc(l)}</div>
+ <div class="row"><button class="btn sm alt" id="copy">COPY LINK</button><button class="btn sm" id="share">Invite Friends</button></div></div>`},
+async ads(){const a=await api("/api/ads");
+ return `${demoBar()}<h2>📺 Ads</h2><div class="card hero"><div class="bal">${a.left}/10</div><p class="mu">আজকের বাকি বিজ্ঞাপন • প্রতিটিতে +${a.reward} BDT • ২৪ ঘণ্টা পর রিসেট</p><br>
+ <button class="btn" id="ad" ${a.left?"":"disabled"}>Watch & Verify</button></div>`},
+async profile(){const u=cache.user=await api("/api/user");const ph=tu.photo_url?`<img src="${esc(tu.photo_url)}" alt="">`:esc((tu.first_name||"?")[0]);
+ return `${demoBar()}<div class="card row"><div class="av">${ph}</div><div><h3>${esc(tu.first_name||"")} ${esc(tu.last_name||"")}</h3><div class="mu">@${esc(tu.username||"-")} • ID ${tu.id}</div><span class="tag">${esc(u.level)}</span></div></div>
+ <div class="grid g2"><div class="card stat"><span class="mu">Balance</span><b>${fmt(u.balance)} BDT</b></div><div class="card stat"><span class="mu">Rank</span><b>${esc(u.rank)}</b></div>
+ <div class="card stat"><span class="mu">রেফারেল</span><b>${u.referrals}</b></div><div class="card stat"><span class="mu">টাস্ক সম্পন্ন</span><b>${u.tasksDone}</b></div></div>
+ <div class="grid g2"><button class="btn" data-sub="wallet">Wallet</button><button class="btn alt" data-sub="history">Transactions</button></div>`},
+async wallet(){const w=await api("/api/wallet"),u=await api("/api/user");
+ return `<h2>Wallet</h2><div class="card hero"><div class="mu">বর্তমান ব্যালেন্স</div><div class="bal">${fmt(u.balance)} BDT</div><div class="mu">সর্বনিম্ন উত্তোলন: ${w.min} BDT</div></div>
+ <div class="card"><h3 style="margin-bottom:10px">Withdraw</h3><input id="wa" type="number" inputmode="numeric" placeholder="পরিমাণ (BDT)">
+ <select id="wm">${w.methods.map(m=>`<option>${esc(m)}</option>`).join("")}</select><input id="wd" placeholder="ওয়ালেট / অ্যাকাউন্ট অ্যাড্রেস" autocomplete="off">
+ <button class="btn" id="wsub">Request Withdrawal</button></div>`},
+async history(){const t=await api("/api/transactions");
+ return `<h2>Transaction History</h2>`+(t.length?t.map(x=>`<div class="card row sp"><div><b>${x.type}</b><div class="mu">${new Date(x.t).toLocaleString()}</div></div><div style="text-align:right"><b style="color:${x.amount<0?"var(--bad)":"var(--ok)"}">${x.amount>0?"+":""}${x.amount} BDT</b><div><span class="tag">${x.status}</span></div></div></div>`).join(""):'<div class="card mu">এখনো কোনো লেনদেন নেই। Earn পেজ থেকে শুরু করুন।</div>')}
+};
+
+async function render(){const m=$("#v");try{m.innerHTML=await V[sub||tab]();m.scrollTop=0}catch(e){m.innerHTML=`<div class="card"><b>লোড হয়নি</b><p class="mu">${esc(e.message)}</p><button class="btn" onclick="render()">আবার চেষ্টা করুন</button></div>`}}
+
+/* ---------- events (delegation) ---------- */
+$("#v").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+ if(t.id==="claim")act(async()=>{t.disabled=true;await api("/api/daily-reward/claim","POST");toast("রিওয়ার্ড যোগ হয়েছে ✅");render()});
+ if(t.dataset.go){const k=cache.tasks.find(x=>x.id==t.dataset.go);if(k.url)(tg?tg.openLink(k.url):window.open(k.url));k.status="opened"}
+ if(t.dataset.vf)act(async()=>{t.disabled=true;await api("/api/tasks/verify","POST",{id:+t.dataset.vf});toast("যাচাই সফল ✅");render()});
+ if(t.id==="copy")navigator.clipboard.writeText(link()).then(()=>toast("লিংক কপি হয়েছে"));
+ if(t.id==="share"){const u="https://t.me/share/url?url="+encodeURIComponent(link())+"&text="+encodeURIComponent("TASK BOT-এ কাজ করে BDT আয় করুন!");tg?tg.openTelegramLink(u):window.open(u)}
+ if(t.id==="ad")act(async()=>{t.disabled=true;await api("/api/ads/claim","POST");toast("+5 BDT ✅");render()});
+ if(t.dataset.sub)go("profile",t.dataset.sub);
+ if(t.id==="wsub")act(async()=>{const a=+$("#wa").value,ad=$("#wd").value.trim();if(!a||!ad)throw Error("সব তথ্য দিন");t.disabled=true;await api("/api/withdraw","POST",{amount:a,method:$("#wm").value,address:ad});toast("অনুরোধ জমা হয়েছে");go("profile","history")});
+});
+go("home");
+</script>
+</body>
+</html>
